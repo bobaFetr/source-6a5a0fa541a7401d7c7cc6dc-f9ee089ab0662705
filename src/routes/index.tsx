@@ -9,9 +9,9 @@ export const Route = createFileRoute('/')({ component: ServerManager })
 type ConnectionState = 'idle' | 'connecting' | 'connected'
 function ServerManager() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
-  const [host, setHost] = useState('192.168.1.24')
+  const [host, setHost] = useState('192.168.1.131')
   const [port, setPort] = useState('22')
-  const [username, setUsername] = useState('ubuntu')
+  const [username, setUsername] = useState('vboxuser')
   const [password, setPassword] = useState('')
 
   const [liveOutput, setLiveOutput] = useState('')

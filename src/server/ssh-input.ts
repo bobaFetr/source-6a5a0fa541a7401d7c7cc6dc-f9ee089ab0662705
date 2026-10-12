@@ -13,6 +13,20 @@ export const commands = {
     "if command -v flatpak >/dev/null 2>&1; then printf '\\nFLATPAK packages\\n'; flatpak list --columns=application,version,installation 2>&1 || printf 'Unable to list Flatpak packages.\\n'; fi",
   ].join('\n'),
   journal: 'journalctl --no-pager -n 60',
+  logs: 'LC_ALL=C journalctl --no-pager -n 300 -o short-iso 2>&1',
+  events: [
+    "printf '=== Failed services (current state) ===\\n'",
+    'LC_ALL=C systemctl --no-pager --plain list-units --type=service --state=failed || exit 1',
+    "printf '\\n=== Warnings and errors (last 24 hours, latest 200) ===\\n'",
+    'LC_ALL=C journalctl --no-pager --since "24 hours ago" -p warning -n 200 -o short-iso 2>&1 || exit 1',
+    "printf '\\n=== Crash / OOM / kernel panic signals (last 24 hours, latest 100) ===\\n'",
+    'crash_output=$(LC_ALL=C journalctl --no-pager --quiet --since "24 hours ago" --case-sensitive=no --grep="segfault|core dumped|dumped core|out of memory|oom-kill|killed process|kernel panic|soft lockup|hard LOCKUP|watchdog.*(BUG|lockup|panic)|status=.*(SEGV|ABRT)" -n 100 -o short-iso 2>&1)',
+    'crash_status=$?',
+    'printf "%s\\n" "$crash_output"',
+    'if [ "$crash_status" -eq 1 ] && { [ -z "$crash_output" ] || [ "$crash_output" = "-- No entries --" ]; }; then printf "No recorded crash signals in the accessible journal.\\n"; elif [ "$crash_status" -ne 0 ]; then exit "$crash_status"; fi',
+    "printf '\\n=== Recorded core dumps (last 24 hours, latest 50) ===\\n'",
+    'if command -v coredumpctl >/dev/null 2>&1; then LC_ALL=C coredumpctl --no-pager --since "24 hours ago" list 2>&1 | tail -n 50; else printf "coredumpctl is not installed; crash signals above come from the journal.\\n"; fi',
+  ].join('\n'),
 } as const
 export type Operation = keyof typeof commands | 'start' | 'stop' | 'restart'
 export type SshInput = Coordinates & { operation: Operation; container?: string }

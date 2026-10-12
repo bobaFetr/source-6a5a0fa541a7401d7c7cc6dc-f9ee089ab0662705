@@ -63,7 +63,7 @@ for (const interval of [1, 2, 3, 5]) test(`streams fresh samples at ${interval}s
   assert.equal(released, 1)
 })
 
-test('batched SSH frames do not stop a healthy monitor and abort releases it once', async t => {
+for (const slowBrowser of [false, true]) test(`batched SSH frames stay live with ${slowBrowser ? 'slow' : 'active'} browser consumption`, async t => {
   const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048, privateKeyEncoding: { type: 'pkcs1', format: 'pem' }, publicKeyEncoding: { type: 'spki', format: 'pem' } })
   const key = ssh2.utils.parseKey(privateKey).getPublicSSH().toString('base64')
   const clients = new Set()
@@ -85,7 +85,9 @@ test('batched SSH frames do not stop a healthy monitor and abort releases it onc
   const abort = new AbortController()
   const stream = streamProcesses({ host: '127.0.0.1', port: String(server.address().port), username: 'ubuntu', password: 'test' }, [key], abort.signal, () => released++, 5)
   const reader = stream.getReader()
-  for (const [name, value] of [['one', '1'], ['two', '2'], ['three', '3']]) {
+  if (slowBrowser) await new Promise(resolve => setTimeout(resolve, 200))
+  const expected = slowBrowser ? [['one', '1'], ['three', '3']] : [['one', '1'], ['two', '2'], ['three', '3']]
+  for (const [name, value] of expected) {
     const sample = JSON.parse(new TextDecoder().decode((await reader.read()).value))
     assert.equal(sample.output, `top - ${name}\n${value}`)
   }

@@ -245,6 +245,10 @@ code { font-family: 'IBM Plex Mono', monospace; }
 .live-output { padding: 24px; overflow: auto; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.7; min-height: 240px; }
 .live-error { padding: 16px; border: 1px solid #b44931; color: #913820; overflow-wrap: anywhere; }
 .live-controls { padding: 24px; margin-top: 20px; }
+.diagnostics-controls { margin-bottom: 16px; }
+.diagnostics-controls label { font-size: 12px; font-weight: 600; }
+.diagnostics-controls .input-shell { margin-top: 10px; max-width: 560px; }
+.diagnostics-controls p { color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
 .live-controls .input-shell { max-width: 400px; margin-top: 10px; }
 button:disabled { opacity: .6; cursor: wait; }
 

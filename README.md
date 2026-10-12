@@ -31,7 +31,7 @@ There is no SSH-key fallback or simulated connection mode.
 ## Live tools
 
 System overview, processes, storage, running services, journal, Docker listing,
-and confirmed container start/stop/restart by ID. The Processes view streams completed top CPU samples (3 seconds by default; selectable 1, 2, 3, or 5 seconds) over a single authenticated SSH connection; other views refresh on demand. Process updates can be paused, stop when you leave the view, and stop on errors until you resume.
+and confirmed container start/stop/restart by ID. The Processes view streams completed top CPU samples (3 seconds by default; selectable 1, 2, 3, or 5 seconds) over a single authenticated SSH connection; other views refresh on demand. Process updates can be paused, stop when you leave the view, and automatically reconnect after transient failures with a bounded 1?10 second backoff. Authentication, host-key, and invalid-request errors require correction before resuming.
 Docker operations require existing Docker permissions for the Ubuntu user.
 Dashboard actions do not invoke sudo. Dedicated file editing, firewall, user, and package-management views are not implemented.
 
@@ -155,3 +155,5 @@ npm.cmd run build
 The SSH integration test starts a temporary loopback SSH server and verifies correct
 passwords, rejected passwords/users, rejected host keys, and no key/agent fallback.
 It does not test your actual VM.
+
+Monitoring tolerates up to 90 seconds without SSH output during VM memory pressure. Old readings remain labelled stale. Slow browser consumption retains only the newest waiting sample instead of stopping monitoring. Pause, leaving Processes, and Disconnect cancel pending reconnects. The monitor cannot produce fresh readings while the guest itself is unable to schedule top or SSH.

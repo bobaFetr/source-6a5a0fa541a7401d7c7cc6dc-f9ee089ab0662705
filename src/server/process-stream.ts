@@ -11,6 +11,7 @@ export function monitorCommand(interval: number) {
 export function streamProcesses(data: Coordinates, keys: string[], signal: AbortSignal, onDone: () => void, interval = 3) {
   const command = monitorCommand(interval)
   let stop = () => {}
+  let pendingFrame: { output: string; sampledAt: number; completionDelayMs: number; queuedAt: number } | undefined
   return new ReadableStream<Uint8Array>({
     start(controller) {
       const client = new Client()
@@ -26,6 +27,7 @@ export function streamProcesses(data: Coordinates, keys: string[], signal: Abort
       const finish = (message?: string, cancelled = false) => {
         if (done) return
         done = true
+        pendingFrame = undefined
         clearTimeout(deadline)
         signal.removeEventListener('abort', abort)
         client.destroy()
@@ -39,7 +41,10 @@ export function streamProcesses(data: Coordinates, keys: string[], signal: Abort
       stop = () => finish(undefined, true)
       const resetDeadline = () => {
         clearTimeout(deadline)
-        deadline = setTimeout(() => finish('Process monitoring timed out. Displayed data is stale.'), 15000)
+        // Memory reclaim can stall an otherwise healthy VM for tens of seconds.
+        // Freshness is shown separately in the browser; silence is not a reason
+        // to discard a connection after only 15 seconds.
+        deadline = setTimeout(() => finish('Process monitoring timed out. Displayed data is stale.'), 90000)
       }
       signal.addEventListener('abort', abort, { once: true })
       if (signal.aborted) { abort(); return }
@@ -51,10 +56,11 @@ export function streamProcesses(data: Coordinates, keys: string[], signal: Abort
         if (error) { finish('The VM refused the process monitor.'); return }
         resetDeadline()
         channel.on('error', () => finish('The process monitor failed.'))
-        channel.on('close', () => finish('The process monitor stopped. Check that top (procps) is installed.'))
+        channel.on('close', () => finish('The process monitor stopped unexpectedly.'))
         channel.stderr.on('data', () => { /* Do not expose arbitrary server diagnostic output. */ })
         channel.on('data', (chunk: Buffer) => {
           if (done) return
+          resetDeadline()
           buffer += decoder.write(chunk)
           if (Buffer.byteLength(buffer) > 1024 * 1024) { finish('Process sample exceeded the size limit.'); return }
           // A subsequent header proves the preceding frame is complete, regardless of SSH chunk boundaries.
@@ -77,18 +83,28 @@ export function streamProcesses(data: Coordinates, keys: string[], signal: Abort
             frameStartedMonotonic = performance.now()
             resetDeadline()
             if (initialFrame) { initialFrame = false; continue }
-            if ((controller.desiredSize ?? 0) <= 0) { finish('Monitoring paused because the browser cannot keep up.'); return }
-            controller.enqueue(encoder.encode(JSON.stringify({ output, sampledAt, completionDelayMs }) + '\n'))
+            const frame = encoder.encode(JSON.stringify({ output, sampledAt, completionDelayMs }) + '\n')
+            // Keep the newest waiting sample rather than closing the stream or
+            // building an unbounded backlog for a slow browser.
+            if ((controller.desiredSize ?? 0) <= 0) pendingFrame = { output, sampledAt, completionDelayMs, queuedAt: performance.now() }
+            else { pendingFrame = undefined; controller.enqueue(frame) }
           }
         })
       }))
       try {
         client.connect({ host: data.host, port: Number(data.port), username: data.username, password: data.password, authHandler: ['password'], tryKeyboard: false, readyTimeout: 10000,
-          keepaliveInterval: 5000, keepaliveCountMax: 2,
+          keepaliveInterval: 5000, keepaliveCountMax: 18,
           hostVerifier: (key: Buffer) => { untrusted = !keys.includes(key.toString('base64')); return !untrusted },
         })
       } catch { finish('Unable to start process monitoring.') }
     },
+    pull(controller) {
+      if (pendingFrame) {
+        const frame = pendingFrame
+        pendingFrame = undefined
+        controller.enqueue(new TextEncoder().encode(JSON.stringify({ output: frame.output, sampledAt: frame.sampledAt, completionDelayMs: frame.completionDelayMs + Math.max(0, performance.now() - frame.queuedAt) }) + '\n'))
+      }
+    },
     cancel() { stop() },
-  }, { highWaterMark: 4 })
+  }, { highWaterMark: 1 })
 }
