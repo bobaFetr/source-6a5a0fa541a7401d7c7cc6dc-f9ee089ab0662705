@@ -24,6 +24,7 @@ test('real SSH handshake enforces password authentication and host verification'
       accept().on('exec', (acceptExec, _reject, info) => {
         executions++
         const stream = acceptExec()
+        if (info.command === 'wait') { server.emit('waiting'); return }
         if (info.command === 'unicode') {
           const bytes = Buffer.from('Ubuntu · café 日本語')
           for (const byte of bytes) {
@@ -58,4 +59,14 @@ test('real SSH handshake enforces password authentication and host verification'
   assert.match(wrongHost.output, /host key/)
   assert.equal(executions, 2, 'Rejected authentication must never execute commands')
   assert.ok(methods.length > 0 && methods.every(method => method === 'password'))
+  const cancelled = new AbortController()
+  cancelled.abort()
+  assert.deepEqual(await passwordSsh(coordinates, 'hostname', [key], 20000, cancelled.signal), { ok: false, output: 'SSH operation cancelled.' })
+  assert.equal(executions, 2, 'A pre-cancelled check must not execute a command')
+  const active = new AbortController()
+  const waiting = once(server, 'waiting')
+  const pending = passwordSsh(coordinates, 'wait', [key], 20000, active.signal)
+  await waiting
+  active.abort()
+  assert.deepEqual(await pending, { ok: false, output: 'SSH operation cancelled.' })
 })

@@ -249,6 +249,51 @@ code { font-family: 'IBM Plex Mono', monospace; }
 .diagnostics-controls label { font-size: 12px; font-weight: 600; }
 .diagnostics-controls .input-shell { margin-top: 10px; max-width: 560px; }
 .diagnostics-controls p { color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+.health-overview { margin-bottom: 24px; }
+.health-banner { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; border-left: 4px solid var(--green); }
+.health-banner > svg { color: var(--green); flex-shrink: 0; }
+.health-banner.attention { border-left-color: var(--orange); }
+.health-banner.attention > svg { color: var(--orange); }
+.health-banner h2 { font-size: 21px; margin: 6px 0; letter-spacing: -.03em; }
+.health-banner p, .health-alert-summary p, .alerts-view .panel-header p { color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
+.health-banner > button { margin-left: auto; flex-shrink: 0; }
+.health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.health-card { min-width: 0; }
+.health-card > svg { color: var(--orange); }
+.health-card h3 { margin: 12px 0; font-size: 13px; }
+.health-card > strong { display: block; font: 500 29px 'IBM Plex Mono', monospace; }
+.health-card > strong.health-word { font-size: 21px; }
+.health-card p, .health-detail { color: var(--ink-soft); font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+.health-link { padding: 0; color: var(--green); background: none; border: 0; font-size: 12px; text-decoration: underline; cursor: pointer; }
+.health-alert-summary { margin-top: 16px; }
+.health-alert-summary h2, .alerts-view h2 { display: flex; align-items: center; gap: 8px; }
+.health-summary-row { display: flex; width: 100%; align-items: center; gap: 10px; padding: 14px 0; background: none; border: 0; border-top: 1px solid var(--line); text-align: left; font-size: 12px; cursor: pointer; }
+.health-summary-row .incident-badge { margin-left: auto; }
+.health-clear { display: flex; gap: 8px; align-items: center; }
+.health-footnote { color: var(--ink-soft); font-size: 11px; line-height: 1.7; }
+.alerts-view .panel-header { flex-wrap: wrap; }
+.alerts-view .panel-header .live-tabs { margin: 0; }
+.alerts-toolbar { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+.alerts-toolbar > .input-shell { flex: 1; min-width: 180px; }
+.alerts-toolbar > label:not(.input-shell) { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.alerts-toolbar select { padding: 10px; background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+.incident-list { display: grid; gap: 14px; margin-top: 20px; }
+.incident { border: 1px solid var(--line); border-left: 3px solid var(--amber); padding: 18px; }
+.incident.critical { border-left-color: var(--orange); }
+.incident.info { border-left-color: var(--blue); }
+.incident-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.incident-heading h3 { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.incident-badge { padding: 5px 8px; color: var(--amber); background: var(--paper); font: 500 9px 'IBM Plex Mono', monospace; text-transform: uppercase; }
+.incident-badge.critical { color: var(--orange-dark); }
+.incident-badge.info { color: var(--blue); }
+.incident-status { margin-left: auto; color: var(--ink-soft); font-size: 10px; }
+.incident > p { font: 11px/1.7 'IBM Plex Mono', monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.incident dl { display: flex; gap: 20px; flex-wrap: wrap; margin: 18px 0; }
+.incident dt { color: var(--ink-soft); font-size: 10px; }
+.incident dd { margin: 5px 0 0; font-size: 11px; }
+.alerts-empty { padding: 35px 0; color: var(--ink-soft); font-size: 13px; }
+@media (max-width: 1000px) { .health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .health-grid { grid-template-columns: 1fr; } .health-banner { flex-wrap: wrap; } .health-banner > button { margin-left: 0; } .incident-status { width: 100%; margin-left: 0; } }
 .live-controls .input-shell { max-width: 400px; margin-top: 10px; }
 button:disabled { opacity: .6; cursor: wait; }
 

@@ -1,5 +1,36 @@
 # Northstar Server Console
 
+## Health overview and alerts
+
+Overview includes read-only CPU, RAM availability, memory stall pressure (PSI),
+root filesystem capacity, failed systemd services, cached APT updates, and
+Ubuntu's reboot-required marker. Health checks continue across dashboard tabs
+while connected, repeating 10 seconds after each check finishes. Readings older
+than 25 seconds are labelled delayed; slow results cannot resolve current alerts.
+Checks tolerate a busy VM for up to 90 seconds and retry after failures.
+
+Alerts trigger for CPU or RAM use at least 90%, or memory PSI avg10 at least 10%,
+observed for 30 seconds without observation gaps exceeding 30 seconds. Root disk
+usage at least 90%, failed services, cached security updates, and reboot-required
+status raise immediate alerts. Missing checks stay unavailable and cannot resolve
+an existing alert. CPU excludes I/O wait and steal time; RAM use here is based on
+MemAvailable, which includes reclaimable cache, rather than top's used field.
+
+The latest 100 accessible journal records are checked for crash/OOM/lockup
+evidence. These become recorded incidents, not claims that a crash is still active.
+This bounded check does not capture every incident; Events provides a broader
+journal query. Package lists are read from the local APT cache without running
+apt update or installing packages. The cache directory timestamp is not proof
+that every package list is current.
+
+The Alerts tab provides status/severity filters, search, acknowledgement,
+JSON export, and clearing historical incidents. Up to 200 incidents and 1,000
+journal deduplication IDs are saved in browser localStorage per server and user,
+without connection credentials. Active incidents remain until a known fresh
+check verifies recovery. Acknowledgement does not resolve an alert. Monitoring
+and recovery checks stop on Disconnect or closing the app; there is no background
+agent, email notification, or monitoring while the browser is closed.
+
 Local Ubuntu VM management through password-authenticated SSH.
 
 ## Start locally
